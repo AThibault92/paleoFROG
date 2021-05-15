@@ -21,7 +21,7 @@ mod_maat_prediction_ui <- function(id){
                            choiceNames = c("FROG5me", "FROG", "FROG500", "FROG0"),
                            choiceValues = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0"),
                            selected = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0")
-                           ),
+        ),
         actionButton(inputId = ns("run"), label = "Run the models"),
         uiOutput(outputId = ns("uiout_dl_results"))
       ),
@@ -43,7 +43,7 @@ mod_maat_prediction_server <- function(input, output, session, r){
     r$results <- tibble::tibble(
       ID = r$data$ID
     )
-
+    require(workflows)
     if ("MAAT_5met" %in% input$model_list){
       pred_MAAT_5met <- predict(paleoFROG::rf_maat_5methyl, r$data)
       r$results$FROG5me <- pred_MAAT_5met$.pred
