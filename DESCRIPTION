@@ -1,6 +1,6 @@
 Package: paleoFROG
 Title: FROG paleo MAAT reconstruction
-Version: 0.0.0.9000
+Version: 0.1
 Authors@R: person('Alexandre', 'Thibault', email = 'alexandre.thibault@anteagroup.fr', role = c('cre', 'aut'))
 Description: Shiny app to reconstruct paleo MAAT using random forest models (FROG).
 License: What license is it under?
@@ -18,7 +18,9 @@ Imports:
     recipes,
     rsample,
     tibble,
-    workflows
+    workflows,
+    shinyalert,
+    readr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

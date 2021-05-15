@@ -1,0 +1,41 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# paleoFROG
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+**paleoFROG** is a R application inside a R package used to predict MAAT using brGDGT.
+
+## Installation
+
+You can install  paleoFROG from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("AThibault92/paleoFROG")
+```
+## Lauch application
+
+To run the application, please do the followinf line:
+
+```{r eval=FALSE}
+paleoFROG::run_app()
+```
+
+## Reference
+
+APPLICATION OF A MACHINE-LEARNING ALGORITHM FOR THE DEVELOPMENT OF A GLOBAL BRANCHED GDGT TEMPERATURE CALIBRATION IN TERRESTRIAL SETTINGS

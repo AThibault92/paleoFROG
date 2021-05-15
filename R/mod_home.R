@@ -11,8 +11,22 @@ mod_home_ui <- function(id){
   ns <- NS(id)
   tagList(
     h1("Welcome to the paleoFROG application!"),
-    p("This application allows paleoMAAT reconstruction using brGDGTs."),
-    p("Lien vers la publication")
+    p("This application allows:"),
+    tags$ul(
+      tags$li(
+        "Visualize brGDGTs relative abundance"
+      ),
+      tags$li(
+        "Compute brGDGT indices"
+      ),
+      tags$li(
+        HTML("Predict MAAT using MBT'<sub>5Me</sub> index and FROGs<sup>*</sup> models")
+      )
+    ),
+    tags$i(HTML("<sup>*</sup>FROG : random <b>F</b>orest <b>R</b>egression for pale<b>O</b>MAAT using br<b>G</b>DGTs")),
+    tags$br(),
+    tags$br(),
+    p("These models are based on the following publication:", tags$a("APPLICATION OF A MACHINE-LEARNING ALGORITHM FOR THE DEVELOPMENT OF A GLOBAL BRANCHED GDGT TEMPERATURE CALIBRATION IN TERRESTRIAL SETTINGS"))
   )
 }
 

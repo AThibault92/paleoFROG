@@ -10,25 +10,28 @@
 mod_maat_prediction_ui <- function(id){
   ns <- NS(id)
   tagList(
-    fluidRow(
-      h3("Predict temperature")
-    ),
+    h3("Predict temperature"),
     sidebarLayout(
       sidebarPanel(
         width = 2,
         "Chose the models:",
         checkboxGroupInput(inputId = ns("model_list"), label = NULL,
-                           choiceNames = c("FROG5me", "FROG", "FROG500", "FROG0"),
-                           choiceValues = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0"),
-                           selected = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0")
+                           choiceNames = c("FROG5me", "FROG", "FROG500", "FROG0", "De Jonge et al. 2014", "Naafs et al. 2017"),
+                           choiceValues = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0", "De_Jonge", "Naafs"),
+                           selected = c("MAAT_5met", "MAAT_all", "MAAT_MAP500", "Tavg0", "De_Jonge", "Naafs")
         ),
         actionButton(inputId = ns("run"), label = "Run the models"),
         uiOutput(outputId = ns("uiout_dl_results"))
       ),
-      mainPanel(
+      column(
         width = 10,
-        echarts4r::echarts4rOutput(outputId = ns("plot"), height = "600px")
+        tabsetPanel(
+          # width = 10,
+          tabPanel("Table", DT::dataTableOutput(outputId = ns("tab"))),
+          tabPanel("Plot", echarts4r::echarts4rOutput(outputId = ns("plot"), height = "600px"))
+        )
       )
+
     )
   )
 }
@@ -40,6 +43,7 @@ mod_maat_prediction_server <- function(input, output, session, r){
   ns <- session$ns
 
   observeEvent(input$run,{
+    req(r$data)
     r$results <- tibble::tibble(
       ID = r$data$ID
     )
@@ -64,13 +68,23 @@ mod_maat_prediction_server <- function(input, output, session, r){
       r$results$FROG0 <- pred_Tavg0$.pred
     }
 
+    if ("De_Jonge" %in% input$model_list){
+      mbt5me <- (r$data$i_a + r$data$i_b + r$data$i_c)/(r$data$i_a + r$data$i_b + r$data$i_c + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a)
+      r$results$`De Jonge et al. 2014` <- 31.45*mbt5me - 8.57
+    }
+
+    if ("Naafs" %in% input$model_list){
+      mbt5me <- (r$data$i_a + r$data$i_b + r$data$i_c)/(r$data$i_a + r$data$i_b + r$data$i_c + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a)
+      r$results$`Naafs et al. 2017` <- 39.09*mbt5me - 14.5
+    }
+
+
   })
 
   output$uiout_dl_results <- renderUI({
 
-    if (!is.na(r$results)){
-      downloadButton(outputId = ns("dl_results"), label = "Download results")
-    }
+    req(r$results)
+    downloadButton(outputId = ns("dl_results"), label = "Download results")
 
   })
 
@@ -83,22 +97,64 @@ mod_maat_prediction_server <- function(input, output, session, r){
 
   output$plot <- echarts4r::renderEcharts4r({
 
-    if (!is.na(r$results)){
-      r$results %>%
-        tidyr::pivot_longer(cols = -ID) %>%
-        dplyr::group_by(name) %>%
-        echarts4r::e_charts(ID) %>%
-        echarts4r::e_line(value, smooth = 0) %>%
-        echarts4r::e_flip_coords() %>%
-        echarts4r::e_theme("macarons") %>%
-        echarts4r::e_x_axis(name = "Predicted MAAT (°C)", nameLocation = "center", nameGap = 30) %>%
-        echarts4r::e_toolbox() %>%
-        echarts4r::e_toolbox_feature(feature = c("saveAsImage"), title = "Download") %>%
-        echarts4r::e_tooltip(
-          trigger = "item"
-        ) %>%
-        echarts4r::e_title("MAAT predictions")
+    req(r$results)
+    r$results %>%
+      tidyr::pivot_longer(cols = -ID) %>%
+      dplyr::group_by(name) %>%
+      echarts4r::e_charts(ID) %>%
+      echarts4r::e_line(value, smooth = 0) %>%
+      echarts4r::e_flip_coords() %>%
+      echarts4r::e_theme("macarons") %>%
+      echarts4r::e_x_axis(name = "Predicted MAAT (°C)", nameLocation = "center", nameGap = 30) %>%
+      echarts4r::e_toolbox() %>%
+      echarts4r::e_toolbox_feature(feature = c("saveAsImage"), title = "Download") %>%
+      echarts4r::e_tooltip(
+        trigger = "item"
+      ) %>%
+      echarts4r::e_title("MAAT predictions") %>%
+      echarts4r::e_legend(top = 30) %>%
+      echarts4r::e_tooltip(
+        trigger = "item",
+        formatter = htmlwidgets::JS("
+    function(params){
+    var colorSpan = color => '<span style=\"display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '\"></span>';
+      return(colorSpan(params.color) + 'Model: '+params.seriesName+'<br />Sample: ' + params.value[1]+'<br />Predicted MAAT: ' + Math.round(params.value[0]*10)/10 +'°C')
     }
+    ")
+      )
+
+  })
+
+  output$tab <- DT::renderDataTable({
+
+    req(r$results)
+
+    val <- r$results %>%
+      tidyr::pivot_longer(cols = -ID) %>%
+      dplyr::pull(value)
+    brks <- quantile(val, probs = seq(.05, .95, length.out = 50), na.rm = TRUE)
+
+    r$results %>%
+      DT::datatable(
+        class = 'cell-border stripe',
+        rownames = FALSE,
+        # colnames = c("Sample ID", "MBT'5Me", "IR6Me", "CI"),
+        selection = "none",
+        options = list(
+          pageLength = 50,
+          searching = FALSE,
+          lengthChange = FALSE,
+          columnDefs = list(list(className = 'dt-center', targets = 0:(ncol(r$results)-1)))
+        )
+      ) %>%
+      DT::formatRound(
+        setdiff(names(r$results), "ID"),
+        digits = 1
+      ) %>%
+      DT::formatStyle(
+        setdiff(names(r$results), "ID"),
+        backgroundColor = DT::styleInterval(brks, colorRampPalette(c("#3d84a8", "white", "#f67280"))(length(brks)+1))
+      )
 
   })
 

@@ -10,15 +10,9 @@
 mod_indices_ui <- function(id){
   ns <- NS(id)
   tagList(
-    fluidRow(
-      h3("GDGTs indices")
-    ),
-    tabsetPanel(
-      tabPanel("MBT5'me", echarts4r::echarts4rOutput(outputId = ns("plot_mbt"))),
-      tabPanel("IR6me", echarts4r::echarts4rOutput(outputId = ns("plot_ir6"))),
-      tabPanel("CI", echarts4r::echarts4rOutput(outputId = ns("plot_ci"))),
-      tabPanel("table", DT::dataTableOutput(outputId = ns("tab")))
-    )
+    h3("GDGTs indices"),
+    downloadButton(outputId = ns("dl"), label = "Download all indices"),
+    DT::dataTableOutput(outputId = ns("tab"))
   )
 }
 
@@ -29,90 +23,72 @@ mod_indices_server <- function(input, output, session, r){
   ns <- session$ns
 
   observeEvent(r$data,{
-    if (!is.na(r$data)){
-      r$indices <- tibble::tibble(
-        ID = r$data$ID
-      )
+    req(r$data)
+    r$indices <- tibble::tibble(
+      ID = r$data$ID
+    )
 
-      # if ("mbt5me" %in% input$indice){
-      r$indices$mbt5me <- (r$data$i_a + r$data$i_b + r$data$i_c)/(r$data$i_a + r$data$i_b + r$data$i_c + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a)
-      # }
+    # if ("mbt5me" %in% input$indice){
+    r$indices$mbt5me <- (r$data$i_a + r$data$i_b + r$data$i_c)/(r$data$i_a + r$data$i_b + r$data$i_c + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a)
+    # }
 
-      # if ("ir6me" %in% input$indice){
-      r$indices$ir6me <- (r$data$ii_a_p + r$data$ii_b_p + r$data$ii_c_p + r$data$iii_a_p + r$data$iii_b_p)/
-        (r$data$ii_a_p + r$data$ii_b_p + r$data$ii_c_p + r$data$iii_a_p + r$data$iii_b_p + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a + r$data$iii_b)
-      # }
+    # if ("ir6me" %in% input$indice){
+    r$indices$ir6me <- (r$data$ii_a_p + r$data$ii_b_p + r$data$ii_c_p + r$data$iii_a_p + r$data$iii_b_p)/
+      (r$data$ii_a_p + r$data$ii_b_p + r$data$ii_c_p + r$data$iii_a_p + r$data$iii_b_p + r$data$ii_a + r$data$ii_b + r$data$ii_c + r$data$iii_a + r$data$iii_b)
+    # }
 
-      # if ("ci" %in% input$indice){
-      r$indices$ci <- (r$data$i_a)/(r$data$i_a + r$data$ii_a + r$data$iii_a)
-    }
+    # if ("ci" %in% input$indice){
+    r$indices$ci <- (r$data$i_a)/(r$data$i_a + r$data$ii_a + r$data$iii_a)
+
   })
 
-output$plot_mbt <- echarts4r::renderEcharts4r({
+  output$dl <- downloadHandler(
+    filename = "indices.csv",
+    content = function(file){
+      readr::write_csv(r$indices, file)
+    }
+  )
 
-  if (!is.na(r$indices)){
 
+  output$tab <- DT::renderDataTable({
+    req(r$indices)
     r$indices %>%
-      echarts4r::e_chart(ID) %>%
-      echarts4r::e_bar(mbt5me) %>%
-      echarts4r::e_flip_coords() %>%
-      echarts4r::e_legend(show = FALSE) %>%
-      echarts4r::e_theme("macarons") %>%
-      echarts4r::e_x_axis(name = "MBT5'me", nameLocation = "center", nameGap = 30) %>%
-      echarts4r::e_toolbox() %>%
-      echarts4r::e_toolbox_feature(feature = c("saveAsImage"), title = "Download") %>%
-      echarts4r::e_tooltip(
-        trigger = "item"
+      DT::datatable(
+        class = 'cell-border stripe',
+        rownames = FALSE,
+        colnames = c("Sample ID", "MBT'5Me", "IR6Me", "CI"),
+        selection = "none",
+        options = list(
+          pageLength = 50,
+          searching = FALSE,
+          lengthChange = FALSE,
+          columnDefs = list(list(className = 'dt-center', targets = 0:3))
+        )
+      ) %>%
+      DT::formatRound(
+        2:4,
+        digits = 2
+      ) %>%
+      DT::formatStyle(
+        'mbt5me',
+        background = DT::styleColorBar(c(0,1), '#f07b3f', angle = -90),
+        backgroundSize = '100% 90%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center'
+      ) %>%
+      DT::formatStyle(
+        'ir6me',
+        background = DT::styleColorBar(c(0,1), 'steelblue', angle = -90),
+        backgroundSize = '100% 90%',
+        backgroundRepeat = 'no-repeat',
+        backgroundPosition = 'center'
+      ) %>%
+      DT::formatStyle(
+        'ci',
+        background = DT::styleInterval(cuts = 0.69, values = c("#f67280", "#99ddcc"))
       )
-  }
 
-})
-
-output$plot_ir6 <- echarts4r::renderEcharts4r({
-
-  if (!is.na(r$indices)){
-
-    r$indices %>%
-      echarts4r::e_chart(ID) %>%
-      echarts4r::e_bar(ir6me) %>%
-      echarts4r::e_flip_coords() %>%
-      echarts4r::e_legend(show = FALSE) %>%
-      echarts4r::e_theme("macarons") %>%
-      echarts4r::e_x_axis(name = "IR6me", nameLocation = "center", nameGap = 30) %>%
-      echarts4r::e_toolbox() %>%
-      echarts4r::e_toolbox_feature(feature = c("saveAsImage"), title = "Download") %>%
-      echarts4r::e_tooltip(
-        trigger = "item"
-      )
-  }
-
-})
-
-output$plot_ci <- echarts4r::renderEcharts4r({
-
-  if (!is.na(r$indices)){
-
-    r$indices %>%
-      echarts4r::e_chart(ID) %>%
-      echarts4r::e_bar(ci) %>%
-      echarts4r::e_flip_coords() %>%
-      echarts4r::e_legend(show = FALSE) %>%
-      echarts4r::e_theme("macarons") %>%
-      echarts4r::e_x_axis(name = "CI", nameLocation = "center", nameGap = 30) %>%
-      echarts4r::e_toolbox() %>%
-      echarts4r::e_toolbox_feature(feature = c("saveAsImage"), title = "Download") %>%
-      echarts4r::e_tooltip(
-        trigger = "item"
-      )
-  }
-
-})
-
-output$tab <- DT::renderDataTable({
-
-  r$indices
-
-})
+  })
 
 }
 

@@ -54,7 +54,14 @@ golem_add_external_resources <- function(){
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'paleoFROG'
-    )
+    ),
+    tags$style(
+      HTML(".row:{
+          margin-left: 0px!important;
+          margin-right: 0px!important;
+      }"
+    )),
+    shinyalert::useShinyalert()
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
   )
