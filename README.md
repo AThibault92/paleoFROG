@@ -20,7 +20,7 @@ remotes::install_github("AThibault92/paleoFROG")
 
 ## Lauch application
 
-To run the application, please do the followinf line:
+To run the application, please copy the following line:
 
 ``` r
 paleoFROG::run_app()
