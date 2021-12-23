@@ -27,6 +27,4 @@ paleoFROG::run_app()
 ```
 
 ## Reference
-
-APPLICATION OF A MACHINE-LEARNING ALGORITHM FOR THE DEVELOPMENT OF A
-GLOBAL BRANCHED GDGT TEMPERATURE CALIBRATION IN SOILS AND PEATS
+Véquaud, P., Thibault, A., Derenne, S., Anquetil, C., Collin, S., Contreras, S., Nottingham A., Sabatier P., Werne J., & Huguet, A. (2021). FROG: A Global Machine-Learning Temperature Calibration For Branched GDGTs In Soils And Peats. Geochimica et Cosmochimica Acta. https://doi.org/10.1016/j.gca.2021.12.007
